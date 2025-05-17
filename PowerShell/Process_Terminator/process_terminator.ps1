@@ -1,17 +1,17 @@
 <#
 Dean Newton
 2025-05-17 initial commit
-Version 1.0.0
+Version 1.1.0
 
 .SYNOPSIS
-This script automates the process of terminating specified processes, replacing specific executable files with a dummy
-executable, and optionally setting up a scheduled task for silent mode execution. It includes error handling.
+Terminates processes with safe wildcard support and confirmation safeguards.
 
 .DESCRIPTION
-This script is designed to be run as an Administrator and performs the following tasks:
-1. Checks if the script is run as Administrator.
-2. Terminates processes by PID or name (with regex support) from command-line, config file, or interactive prompt.
-3. Logs all actions and maintains up to 10 log files.
+Features:
+- Blocks single asterisk (*) wildcard
+- Requires confirmation for multiple processes
+- Color-coded output with process listings
+- Configurable safety thresholds
 #>
 
 param(
@@ -22,200 +22,209 @@ param(
     [Parameter(Mandatory = $false)]
     [Alias("name")]
     [string[]]$ProcessName
-    # Add more parameters as needed
 )
 
-# Show syntax help
-Write-Host @"
-
-=== Process Terminator Usage ===
-Command-line parameters (override config):
--pid         Comma-separated process IDs
--name        Comma-separated process name patterns
-
-Examples:
-.\$($MyInvocation.MyCommand.Name) -pid 1234,5678
-.\$($MyInvocation.MyCommand.Name) -name "chrome*","nginx.*"
-.\$($MyInvocation.MyCommand.Name) -pid 1234 -name "temp*.exe"
-
-Config file usage:
-Create config.json with format:
-{
-    `"PIDs`": [1234, 5678],
-    `"TaskNames`": [ `"process*`", `"regex.*pattern`" ]
-}
-    
-"@  -ForegroundColor Yellow
-
 #region Logging Setup
-# Setup logging directory and transcript file
 $scriptName = "Process_Terminator"
 $logDir = "$env:ProgramData\${scriptName}_Logs"
 $transcriptPath = "$logDir\${scriptName}$(Get-Date -Format 'yyyyMMdd-HHmmss').log"
-New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-Start-Transcript -Path $transcriptPath -Append | Out-Null
-$transcriptStarted = $true
+
+if (-not (Test-Path $logDir)) {
+    New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+}
+
+try {
+    Start-Transcript -Path $transcriptPath -Append -ErrorAction Stop
+    $transcriptStarted = $true
+}
+catch {
+    Write-Warning "Transcript failed: $_"
+    $transcriptStarted = $false
+}
 #endregion
 
 #region Initialization
-# Ensure the script is run as Administrator
 if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Error "This script must be run as Administrator"
+    Write-Error "Administrator rights required" -ErrorAction Stop
     exit 1
 }
 
-# Config paths
+# Show syntax help
+Write-Host @" 
+
+================== Process Terminator Usage ===================
+Command-line parameters (override config):
+  -Pid         Comma-separated process IDs
+  -Name        Comma-separated process name patterns
+
+Examples:
+  .\$($MyInvocation.MyCommand.Name) -Pid 1234,5678
+  .\$($MyInvocation.MyCommand.Name) -Name "chrome*","nginx.*"
+  .\$($MyInvocation.MyCommand.Name) -Pid 1234 -Name "temp*.exe"
+
+Config file usage:
+  Create config.json with format:
+  {
+    "PIDs": [1234, 5678],
+    "TaskNames": ["process*", "regex.*pattern"]
+  }
+================================================================
+
+"@ -ForegroundColor White 
+
 $configPath = Join-Path $PSScriptRoot "config.json"
 $examplePath = Join-Path $PSScriptRoot "config_example.json"
 #endregion
 
-#region Process Terminator Function
+#region Process Termination Logic
 function Invoke-ProcessTerminator {
     param(
         [Parameter(ValueFromPipeline = $true)]
         [object]$InputObject
     )
 
+    begin {
+        $dangerousPatterns = @('^\*$')  # Block single asterisk only
+        $confirmThreshold = 1          # Confirm for >1 process
+    }
+
     process {
-        # Process PIDs
+        $targetProcesses = @()
+
+        #region Process Collection
+        # Handle PIDs
         if ($InputObject.PIDs) {
-            foreach ($ProcessID in $InputObject.PIDs) {
+            foreach ($pid in $InputObject.PIDs) {
+                if ($process = Get-Process -Id $pid -ErrorAction SilentlyContinue) {
+                    $targetProcesses += $process
+                }
+                else {
+                    Write-Host "[Warning] PID $pid not found" -ForegroundColor Yellow
+                }
+            }
+        }
+
+        # Handle process names with safe wildcards
+        if ($InputObject.TaskNames) {
+            foreach ($pattern in $InputObject.TaskNames) {
+                if ($dangerousPatterns -contains $pattern) {
+                    Write-Host "[Blocked] Dangerous pattern: $pattern" -ForegroundColor Red
+                    continue
+                }
+
                 try {
-                    Stop-Process -Id $ProcessID -Force -ErrorAction Stop
-                    # Check if process still exists
-                    $proc = Get-Process -Id $ProcessID -ErrorAction SilentlyContinue
-                    if ($null -eq $proc) {
-                        Write-Host "PID: $ProcessID - Status: " -ForegroundColor DarkYellow -NoNewline
-                        Write-Host "Terminated" -ForegroundColor Green
+                    $matched = Get-Process | Where-Object { 
+                        $_.ProcessName -like $pattern 
+                    } -ErrorAction Stop
+                    
+                    if ($matched) {
+                        $targetProcesses += $matched
                     }
                     else {
-                        Write-Host "PID: $ProcessID - Status: " -ForegroundColor DarkYellow -NoNewline
-                        Write-Host "Error (Still Running)" -ForegroundColor Red
+                        Write-Host "[Info] No matches for: $pattern" -ForegroundColor Yellow
                     }
                 }
                 catch {
-                    Write-Host "PID: $ProcessID - Status: " -ForegroundColor DarkYellow -NoNewline
-                    Write-Host "Error (Exception)" -ForegroundColor Red
+                    Write-Host "[Error] Invalid pattern: $pattern" -ForegroundColor Red
                 }
             }
         }
+        #endregion
 
-        # Process names with regex support
-        if ($InputObject.TaskNames) {
-            foreach ($namePattern in $InputObject.TaskNames) {
-                $matchedProcs = Get-Process | Where-Object { $_.ProcessName -match $namePattern }
-                if ($matchedProcs) {
-                    foreach ($proc in $matchedProcs) {
-                        try {
-                            Stop-Process -Id $proc.Id -Force -ErrorAction Stop
-                            # Check if process still exists
-                            $checkProc = Get-Process -Id $proc.Id -ErrorAction SilentlyContinue
-                            if ($null -eq $checkProc) {
-                                Write-Host "Name: $($proc.ProcessName) (PID: $($proc.Id)) - Status: " -ForegroundColor DarkYellow -NoNewline
-                                Write-Host "Terminated" -ForegroundColor Green
-                            }
-                            else {
-                                Write-Host "Name: $($proc.ProcessName) (PID: $($proc.Id)) - Status: " -ForegroundColor DarkYellow -NoNewline
-                                Write-Host "Error (Still Running)" -ForegroundColor Red
-                            }
-                        }
-                        catch {
-                            Write-Host "Name: $($proc.ProcessName) (PID: $($proc.Id)) - Status: " -ForegroundColor DarkYellow -NoNewline
-                            Write-Host "Error (Exception)" -ForegroundColor Red
-                        }
-                    }
-                }
-                else {
-                    Write-Host "No processes matched pattern: $namePattern" -ForegroundColor Yellow
-                }
-            }
-        }
-    }
-}
-#endregion
+        #region Safety Checks
+        $uniqueTargets = $targetProcesses | Sort-Object Id -Unique
 
-#region Main Logic
-# Handle command-line parameters
-if ($ProcessID -or $ProcessName) {
-    $paramObject = [PSCustomObject]@{
-        PIDs      = $ProcessID
-        TaskNames = $ProcessName
-    }
-    $paramObject | Invoke-ProcessTerminator
-}
-else {
-    # Load config if exists
-    if (Test-Path $configPath) {
-        $config = Get-Content $configPath -Raw | ConvertFrom-Json
-    }
-
-    if ($config -and ($config.PIDs -or $config.TaskNames)) {
-        $config | Invoke-ProcessTerminator
-    }
-    else {
-        # Interactive mode
-        Write-Host "No valid config found."
-        $userInput = Read-Host "Enter PID or Process name to TERMINATE (wildcards allowed): "
-        
-        if (-not $userInput) {
-            # Create example config
-            $exampleConfig = @{
-                PIDs      = @(1234, 5678)
-                TaskNames = @("chrome*", "node*", "nginx.*")
-            }
-            $exampleConfig | ConvertTo-Json -Depth 3 | Set-Content $examplePath
-            Write-Host "Created example config at: $examplePath"
-            exit
+        if ($uniqueTargets.Count -eq 0) {
+            Write-Host "No valid targets" -ForegroundColor Cyan
+            return
         }
 
-        # Try parse as PID first
-        if ($userInput -match '^\d+$') {
+        Write-Host "`n=== Matched Processes ===" -ForegroundColor Cyan
+        $uniqueTargets | ForEach-Object {
+            Write-Host " - $($_.ProcessName) " -NoNewline -ForegroundColor DarkYellow
+            Write-Host "(PID: $($_.Id))" -ForegroundColor Gray
+        }
+
+        if ($uniqueTargets.Count -gt $confirmThreshold) {
+            $confirmation = Read-Host "`nConfirm termination of $($uniqueTargets.Count) processes? (Y/N)"
+            if ($confirmation -notmatch '^[yY]') {
+                Write-Host "Termination cancelled" -ForegroundColor Green
+                return
+            }
+        }
+        #endregion
+
+        #region Process Termination
+        foreach ($process in $uniqueTargets) {
             try {
-                Stop-Process -Id $userInput -Force -ErrorAction Stop
-                $proc = Get-Process -Id $userInput -ErrorAction SilentlyContinue
-                if ($null -eq $proc) {
-                    Write-Host "PID: $userInput - Status: " -ForegroundColor DarkYellow -NoNewline
-                    Write-Host "Terminated" -ForegroundColor Green
+                Stop-Process -Id $process.Id -Force -ErrorAction Stop
+                
+                if (-not (Get-Process -Id $process.Id -ErrorAction SilentlyContinue)) {
+                    Write-Host "[Terminated] " -NoNewline -ForegroundColor Green
+                    Write-Host "$($process.ProcessName) (PID: $($process.Id))" -ForegroundColor DarkYellow
                 }
                 else {
-                    Write-Host "PID: $userInput - Status: " -ForegroundColor DarkYellow -NoNewline
-                    Write-Host "Error (Still Running)" -ForegroundColor Red
+                    Write-Host "[Failed] " -NoNewline -ForegroundColor Red
+                    Write-Host "$($process.ProcessName) (PID: $($process.Id))" -ForegroundColor DarkYellow
                 }
             }
             catch {
-                Write-Host "PID: $userInput - Status: " -ForegroundColor DarkYellow -NoNewline
-                Write-Host "Error (Exception)" -ForegroundColor Red
+                Write-Host "[Error] " -NoNewline -ForegroundColor Red
+                Write-Host "$($process.ProcessName) (PID: $($process.Id)): $_" -ForegroundColor DarkYellow
             }
         }
-        else {
-            $matchedProcs = Get-Process | Where-Object { $_.ProcessName -match $userInput }
-            if ($matchedProcs) {
-                foreach ($proc in $matchedProcs) {
-                    try {
-                        Stop-Process -Id $proc.Id -Force -ErrorAction Stop
-                        $checkProc = Get-Process -Id $proc.Id -ErrorAction SilentlyContinue
-                        if ($null -eq $checkProc) {
-                            Write-Host "Name: $($proc.ProcessName) (PID: $($proc.Id)) - Status: " -ForegroundColor DarkYellow -NoNewline
-                            Write-Host "Terminated" -ForegroundColor Green
-                        }
-                        else {
-                            Write-Host "Name: $($proc.ProcessName) (PID: $($proc.Id)) - Status: " -ForegroundColor DarkYellow -NoNewline
-                            Write-Host "Error (Still Running)" -ForegroundColor Red
-                        }
-                    }
-                    catch {
-                        Write-Host "Name: $($proc.ProcessName) (PID: $($proc.Id)) - Status: " -ForegroundColor DarkYellow -NoNewline
-                        Write-Host "Error (Exception)" -ForegroundColor Red
-                    }
-                }
-            }
-            else {
-                Write-Host "No processes matched pattern: $userInput" -ForegroundColor Yellow
-            }
-        }
+        #endregion
     }
 }
 #endregion
+
+#region Execution Flow
+if ($ProcessID -or $ProcessName) {
+    [PSCustomObject]@{
+        PIDs      = $ProcessID
+        TaskNames = $ProcessName
+    } | Invoke-ProcessTerminator
+}
+else {
+    if (Test-Path $configPath) {
+        try {
+            $config = Get-Content $configPath -Raw | ConvertFrom-Json -ErrorAction Stop
+            $config | Invoke-ProcessTerminator
+        }
+        catch {
+            Write-Host "Invalid config: $configPath" -ForegroundColor Red
+        }
+    }
+    else {
+    # Interactive mode
+    $userInput = Read-Host "No config found. Enter PID/Process name"
+
+    if (-not $userInput) {
+        [PSCustomObject]@{
+            PIDs      = @(1234)
+            TaskNames = @("example*")
+        } | ConvertTo-Json | Set-Content $examplePath
+        Write-Host "Example config created: $examplePath" -ForegroundColor Green
+        exit
+    }
+
+    if ($userInput -match '^\d+$') {
+        [PSCustomObject]@{ PIDs = @([int]$userInput) } | Invoke-ProcessTerminator
+    }
+    else {
+        # Remove .exe from end if present (case-insensitive)
+        $safeInput = $userInput -replace '\.exe$',''
+        if ($safeInput -eq "*") {
+            Write-Host "Single asterisk wildcard not allowed" -ForegroundColor Red
+            exit
+        }
+        [PSCustomObject]@{ TaskNames = @($safeInput) } | Invoke-ProcessTerminator
+    }
+}
+}
+
+#endregion
+
 
 #region Transcript and Log Maintenance
 if ($transcriptStarted) {
