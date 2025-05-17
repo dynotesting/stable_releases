@@ -1,7 +1,7 @@
 <#
 Dean Newton
 2025-05-17 initial commit
-Version 1.1.0
+Version 1.1.1
 
 .SYNOPSIS
 Terminates processes with safe wildcard support and confirmation safeguards.
@@ -227,15 +227,31 @@ else {
 
 
 #region Transcript and Log Maintenance
+
+#region Cleanup
 if ($transcriptStarted) {
-    try { Stop-Transcript | Out-Null } catch {}
+    try { 
+        Stop-Transcript | Out-Null 
+        # Add delay to ensure file handle is released
+        Start-Sleep -Milliseconds 500
+    }
+    catch {
+        Write-Warning "Error stopping transcript: $_"
+    }
 }
 
-# Retain only the 10 most recent log files
-Get-ChildItem $logDir\*.log | Sort-Object CreationTime -Desc | Select-Object -Skip 10 | Remove-Item -Force
-#endregion
+# Log rotation (keep last 10)
+try {
+    Get-ChildItem $logDir\*.log -ErrorAction Stop | 
+        Sort-Object CreationTime -Desc | 
+        Select-Object -Skip 10 | 
+        Remove-Item -Force -ErrorAction SilentlyContinue
+}
+catch {
+    Write-Warning "Log cleanup failed: $_"
+}
 
-# Final messages and cleanup
+# Final messages
 Write-Host "Operation completed. Logs available at $logDir" -ForegroundColor Green
 Write-Host "Press any key to exit..." -ForegroundColor Cyan
 [void][System.Console]::ReadKey($true)
