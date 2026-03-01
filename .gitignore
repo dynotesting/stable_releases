@@ -1,0 +1,34 @@
+# ignore TOKEN/Credential .config files [important for security]
+*NuGet-packages-public.config
+*NuGet-packages-private.config
+
+# ignore VS CODE package files
+*.psd1
+
+# ignore LOG files in any DIR
+*.log
+
+# ignoring OUT dir as /bin is the published directory. /out is the working directory.
+# Ignore everything under out/, but allow .txt files
+out/**
+!out/**/*.txt
+
+# Ignore build artifacts
+**/bin/
+obj/
+Debug/
+Release/
+
+# keep the root-level bin folder for compiled EXEs
+!/bin/
+
+
+# Ignore Visual Studio files
+.vscode/
+.vs/
+
+# Ignore temporary files
+*.tmp
+
+# Ignored files in root DIR
+/*.json
