@@ -76,7 +76,6 @@ REM --
 REM -- Defaults to FRESH. Only CHECKSTATE sets it to APPEND.
 set "TRACER_MODE=FRESH"
 
-
 REM ============================================================
 REM  TRACER FILE CHECK
 REM
@@ -285,7 +284,7 @@ echo.
 
 if "%STATE_OK%"=="0" (
     REM -- State files missing: TRACER_MODE stays FRESH
-    set "DISC_MSG=rclone bisync state files are missing -- --resync is required"
+    set "DISC_MSG=rclone bisync state files are missing / --resync is required"
     set "DISC_D1=State files track what changed since the last successful sync"
     set "DISC_D2=Without them rclone bisync will abort with a critical error"
     set "DISC_D3=State dir: %BISYNC_DIR%"
