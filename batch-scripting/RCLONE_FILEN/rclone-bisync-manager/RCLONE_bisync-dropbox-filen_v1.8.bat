@@ -3,7 +3,7 @@ REM ============================================================
 set "SCRIPT_NAME=RCLONE bisync manager"
 REM  Version : 1.8
 set "SCRIPT_VERSION=1.8"
-REM  Author  : Dean
+REM  Author  : Dean Newton
 REM  Date Developed : 2026-03-01
 REM  Purpose : Bidirectional sync between Dropbox and Filen
 REM            cloud storage using rclone bisync.
