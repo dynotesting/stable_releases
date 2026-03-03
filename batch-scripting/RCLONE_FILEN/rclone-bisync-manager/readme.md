@@ -1,6 +1,6 @@
 # RCLONE Bisync Manager
 
-Version: 2.4  
+Version: 2.4.0  
 Author: Dean N. (dynotesting)  
 Date: 2026‑03‑02
 
