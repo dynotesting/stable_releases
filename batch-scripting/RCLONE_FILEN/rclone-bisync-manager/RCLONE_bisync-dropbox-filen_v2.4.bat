@@ -1,8 +1,8 @@
 @echo off
 REM ============================================================
 set "SCRIPT_NAME=rclone-bisync-manager"
-REM  Version    : 2.4
-set "SCRIPT_VERSION=2.4"
+REM  Version    : 2.4.0
+set "SCRIPT_VERSION=2.4.0"
 REM  Author     : Dean N. [dynotesting]
 REM  Date Coded : 2026-03-02
 REM  Purpose    : Bidirectional sync between Dropbox and Filen
