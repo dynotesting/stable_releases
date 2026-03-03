@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================
-set "SCRIPT_NAME=RCLONE bisync manager"
+set "SCRIPT_NAME=rclone-bisync-manager"
 REM  Version    : 2.4
 set "SCRIPT_VERSION=2.4"
 REM  Author     : Dean N. [dynotesting]
