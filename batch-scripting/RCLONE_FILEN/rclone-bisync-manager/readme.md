@@ -1,77 +1,66 @@
-# rclone-bisync-manager v1.8
+# RCLONE Bisync Manager
 
-A Windows CMD batch script for safe, guided bidirectional sync between
-two rclone remotes using `rclone bisync`. Built around a tracer file
-checkpoint system that detects incomplete or corrupted sync states before
-rclone is ever invoked.
+Version: 2.4  
+Author: Dean N. (dynotesting)  
+Date: 2026‑03‑02
 
-Configured for Dropbox <-> Filen cloud sync but works with any two rclone
-remotes.
+Batch wrapper for `rclone bisync` that manages a two‑way sync between Dropbox and Filen, with extra safety checks using tracer files and rclone’s bisync state files.
 
-Note:
-
-For easy remote source/destination path setup, RcloneBrowser may be used to identify the path variables. [copy from upload/download dialog]
-https://github.com/kapitainsky/RcloneBrowser
-Credit to kapitainsky
-
-This is a work in progress !
-
--Please backup all your data before executing this script. 
--Run as ADMIN if encounting permission errors.
--Recommnd small dataset test folder setup prior to full drive/cloud sync.
-
----
+The script is designed to prevent accidental data loss or duplication by validating both endpoints and the bisync state before each run, and by guiding you when a one‑time `--resync` is required.
 
 ## Features
 
-- **Tracer file checkpoint system** — small marker files written to each
-  remote confirm that both endpoints were initialized together and that
-  the last sync completed successfully
-- **Append mode run history** — on healthy runs, each tracer file is
-  updated with a timestamped record of every sync run, preserving full
-  history without recreating the file
-- **rclone state file detection** — proactively checks for rclone's own
-  `.path1.lst` / `.path2.lst` baseline files before invoking bisync,
-  preventing the cryptic `must run --resync to recover` critical error
-- **Guided `--resync` prompts** — context-aware messaging tells you
-  exactly *why* you're being asked, with different prompt text depending
-  on the discrepancy type detected
-- **Safe delete threshold** — configurable `--max-delete` percentage
-  prevents runaway deletes from network issues or accidental mass deletion
-- **ANSI color output** — warnings in yellow, errors in red, success in
-  green; degrades gracefully to plain text if ANSI is unavailable
-- **Input validation** — two-stage numeric validation with leading zero
-  normalization for all numeric prompts
-
----
+- Bidirectional sync between a Dropbox path and a Filen path using `rclone bisync`
+- Tracer file system to detect incomplete or corrupted sync runs
+- Validation of rclone bisync state files (`*.lst`) before running
+- Interactive and silent modes
+- Optional loop/service mode for repeated runs
+- Configurable max delete safety percentage
+- Simplified discrepancy handling and silent‑mode routing to avoid fragile CMD parsing edge cases
 
 ## Requirements
 
-- Windows 10 1511+ (for ANSI color support)
-- [rclone](https://rclone.org/downloads/) installed and in PATH
-- Two configured rclone remotes (Dropbox, Filen, or any supported backend)
-- PowerShell (included with Windows — used for tracer file writes only)
-
----
+- Windows 10 (or later)
+- rclone` installed and configured with:  
+  `Dropbox:` remote  
+  `Filen:` remote
+- PowerShell available in `PATH` (used to build tracer file content)
+- Command prompt with ANSI escape support (for colored output), or a terminal that supports ANSI (for example, Windows Terminal)
 
 ## Configuration
 
-Edit the sync profile variables at the top of the script:
+Built‑in defaults (change directly in the script if desired):
 
-```batch
-set "SYNCPROFILE=Dropbox-FILEN_bisync"
-set "SYNCNAME=Dropbox <-> Filen Sync 2 way bidirectional"
-set "SYNCPATH1=Dropbox:1_Dropbox-FILEN_sync"
-set "SYNCPATH2=Filen:/Dropbox-FILEN_sync"
+- **Sync profile name**  
+  `Dropbox-FILEN_bisync`
 
-## Version
+- **Dropbox path**  
+  `Dropbox:1_Dropbox-FILEN_bisync`
 
-Version	Date	    Summary
-v1.1	2026-03-01	Initial release — --resync prompt, --max-delete safety input
-v1.2	2026-03-01	Tracer file system; fixed SET /A validation; quoted SET syntax; fixed ^ continuation bug
-v1.3	2026-03-01	Byte count check; rclone state file detection; ANSI colors; auto-skip --resync
-v1.4	2026-03-01	Checkpoint write timing; APPEND mode run history; CALL :label subroutines
-v1.5	2026-03-01	Removed manual Path 2 write — rclone bisync syncs it automatically
-v1.6	2026-03-01	Fixed rclone lsf --format "s" returning 0 on Dropbox; switched to rclone size --json
-v1.7	2026-03-01	Fixed false positive tracer detection; switched to exact-path rclone lsf
-v1.8	2026-03-01	Fixed leading-zero input bypass; SET /A normalization; script name + version banner
+- **Filen path**  
+  `Filen:/Dropbox-FILEN_bisync`
+
+- **Initial `MAXDELETE` default**  
+  `55`
+
+- **Silent mode defaults**  
+  ```bat
+  set "SILENT_DEFAULT_RESYNC=N"
+  set "SILENT_DEFAULT_MAXDELETE=90"
+
+## Version History
+v2.4 (2026-03-02)
+
+-Simplified tracer discrepancy handling to avoid CMD “was unexpected at this time” parse errors.
+-Flattened silent-mode discrepancy routing into separate labels instead of nested IF blocks.
+-Kept tracer presence/size/state checks and RESYNC guidance intact while reducing parser-sensitive formatting.
+-Left rclone bisync options and safety parameters (MAXDELETE, --resync first-run logic) unchanged.
+
+v2.3 (2026-03-02)
+-Added comprehensive tracer file presence and size checks on both endpoints.
+-Integrated rclone bisync state file validation and explicit RESYNC guidance.
+-Implemented detailed discrepancy warnings explaining risks and recommended actions.
+-Added silent and service modes with configurable RESYNC and MAXDELETE defaults.
+-Added loop mode with configurable timeout between runs.
+-Enhanced tracer file format to include sync run history and environment metadata.
+-Improved validation for the max delete safety percentage.
