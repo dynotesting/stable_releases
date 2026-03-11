@@ -1,5 +1,7 @@
 # stable_releases
 
+**GitHub URL:** https://github.com/dynotesting/stable_releases
+
 A collection of stable, tested scripts and utilities ready for general use.
 
 All releases in this repository have been personally tested and are considered
