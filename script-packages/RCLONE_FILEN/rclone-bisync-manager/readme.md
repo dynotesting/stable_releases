@@ -47,6 +47,7 @@ Built‑in defaults (change directly in the script if desired):
   ```bat
   set "SILENT_DEFAULT_RESYNC=N"
   set "SILENT_DEFAULT_MAXDELETE=90"
+  ```
 
 ## Version History
 v2.4 (2026-03-02)
