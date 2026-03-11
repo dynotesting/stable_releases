@@ -33,7 +33,9 @@ Bulk search and export Magic: The Gathering card data using the [Scryfall API](h
 
 ## Usage
 
+```powershell
 .\Scryfall-MTG-Exporter.ps1
+```
 
 ## Version History
 Scryfall MTG Card Exporter - Version History
