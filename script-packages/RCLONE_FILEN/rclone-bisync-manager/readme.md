@@ -16,15 +16,15 @@ The script prevents accidental data loss or duplication by validating both endpo
 ## Features
 
 - Bidirectional sync between two remotes (e.g. Dropbox / Filen) using `rclone bisync`
-- **Multi-machine lock system** — scans both remotes for any active lock file before syncing; waits and retries if another machine is currently syncing
+- **Multi-machine lock system** ΓÇö scans both remotes for any active lock file before syncing; waits and retries if another machine is currently syncing
 - Lock files written to **both** Path 1 and Path 2 before sync starts so all machines see the lock immediately
 - Tracer file system to detect incomplete or corrupted sync runs; tracer uploaded directly to both remotes (not via bisync propagation)
 - Post-sync tracer write completes **before** lock files are removed, ensuring other machines never see an unlocked but unfinished tracer state
 - Lock and tracer files **excluded from bisync transfer** via `--exclude` filters so they are never treated as user data
 - Validation of rclone bisync state files (`*.lst`) before running
 - Interactive, silent, loop, and service modes
-- **SERVICE mode** — combined silent + loop for background/service execution
-- **MAX_ABORT_RETRIES** — after N consecutive bisync failures, exits with code 1 so a service manager (NSSM / Servy) can restart the process; counter resets on successful sync
+- **SERVICE mode** ΓÇö combined silent + loop for background/service execution
+- **MAX_ABORT_RETRIES** ΓÇö after N consecutive bisync failures, exits with code 1 so a service manager (NSSM / Servy) can restart the process; counter resets on successful sync
 - Configurable max delete safety percentage
 - Structured logging to `C:\ProgramData\rclone-bisync-manager\` with daily log files
 - UTF-8 console encoding enforced to prevent garbled output on machines with non-ASCII hostnames
@@ -35,9 +35,48 @@ The script prevents accidental data loss or duplication by validating both endpo
 
 - Windows 10 or later
 - PowerShell 5.1 or later available in `PATH`
-- `rclone` installed and configured with:
-  - `Dropbox:` remote
-  - `Filen:` remote
+- `rclone` installed and available in `PATH`
+- `Dropbox:` and `Filen:` remotes configured in rclone (see [rclone Remote Setup](#rclone-remote-setup) below)
+
+---
+
+## rclone Remote Setup
+
+The `Dropbox:` and `Filen:` identifiers used in this script are **rclone remote names**, not Windows drive letters. They are defined in rclone's configuration file (`rclone.conf`) and require a one-time setup via `rclone config` on each machine that will run this script.
+
+### Dropbox
+
+Dropbox uses **OAuth2**. During setup, rclone opens a browser window, you log in to Dropbox and authorize the app, and rclone stores a refresh token in `rclone.conf`. That token refreshes silently on every subsequent run ΓÇö no user interaction needed after initial setup.
+
+```powershell
+rclone config
+# Choose: New remote > name it "Dropbox" > type: dropbox > follow OAuth prompts
+```
+
+### Filen
+
+Filen requires your account **email**, **password**, and an **API key**. Generate the API key first using the Filen CLI:
+
+```powershell
+filen-cli export-api-key
+```
+
+Then configure the remote:
+
+```powershell
+rclone config
+# Choose: New remote > name it "Filen" > type: filen > enter email, password, API key
+```
+
+### Credential Storage
+
+Both sets of credentials are stored (encrypted) in:
+
+```
+%APPDATA%\rclone\rclone.conf
+```
+
+Once configured, this script references `Dropbox:` and `Filen:` by name and rclone handles all authentication transparently in the background ΓÇö no credentials are needed in the script itself.
 
 ---
 
@@ -107,7 +146,7 @@ servy-cli start --name "rclone-bisync-manager"
 
 All management files share the `rclone.batch.bisync.*` prefix so a single `--exclude` pattern family covers them all. Both file types are excluded from bisync transfer.
 
-**Lock file** (active-sync mutex — checked by all machines):
+**Lock file** (active-sync mutex ΓÇö checked by all machines):
 
 ```
 rclone.batch.bisync.<profile>.lock.<HOST>.<USER>.lock
@@ -160,20 +199,20 @@ If either `.lst` file is absent, bisync cannot track changes and a `--resync` fi
 
 | Flag | Value | Purpose |
 |---|---|---|
-| `--resync` | *(first-run only)* | Builds baseline `.lst` state files. **Never use on subsequent runs** — forces full re-comparison and may cause data duplication or loss. |
+| `--resync` | *(first-run only)* | Builds baseline `.lst` state files. **Never use on subsequent runs** ΓÇö forces full re-comparison and may cause data duplication or loss. |
 | `--exclude` | `"*rclone.batch.bisync.*.lock.*"` | Excludes all lock files from bisync transfer |
 | `--exclude` | `"*rclone.batch.bisync.*.tracer.*"` | Excludes all tracer files from bisync transfer |
-| `-P` | — | Show real-time transfer progress in the console |
+| `-P` | ΓÇö | Show real-time transfer progress in the console |
 | `--checkers` | `16` | Parallel file comparison threads |
 | `--transfers` | `8` | Files transferred simultaneously |
-| `--conflict-loser` | `num` | On conflict, losing file renamed with numeric suffix (e.g. `file(1).txt`) — both copies preserved |
+| `--conflict-loser` | `num` | On conflict, losing file renamed with numeric suffix (e.g. `file(1).txt`) ΓÇö both copies preserved |
 | `--max-lock` | `0` | Disables bisync lock file timeout; prevents stale lock errors on interrupted syncs |
-| `--max-delete` | `MAXDELETE%` | Safety threshold — bisync aborts if more than this percentage of files would be deleted on either side; range 1–100 |
+| `--max-delete` | `MAXDELETE%` | Safety threshold ΓÇö bisync aborts if more than this percentage of files would be deleted on either side; range 1-100 |
 | `--multi-thread-cutoff` | `64M` | Files larger than 64 MB use multi-threaded download |
 | `--multi-thread-streams` | `8` | Concurrent threads per large-file transfer |
 | `--multi-thread-chunk-size` | `8M` | Chunk size per multi-thread transfer |
-| `--fast-list` | — | Lists remotes in bulk to reduce API calls and rate-limiting risk |
-| `--use-server-modtime` | — | Uses server-reported modification time instead of file hashes; faster, less CPU/API overhead |
+| `--fast-list` | ΓÇö | Lists remotes in bulk to reduce API calls and rate-limiting risk |
+| `--use-server-modtime` | ΓÇö | Uses server-reported modification time instead of file hashes; faster, less CPU/API overhead |
 | `--buffer-size` | `32M` | In-memory read buffer per active file transfer |
 
 ---
@@ -195,7 +234,7 @@ Each log entry is timestamped with one of the following level tags:
 | `[ERROR]` | Failures that prevented a sync step from completing |
 | `[FILE]` | Dedicated file operation entries (lock/tracer writes and deletions) |
 
-A session divider (`=` × 80) is written to the log at the end of each run.
+A session divider (`=` x 80) is written to the log at the end of each run.
 
 ---
 
