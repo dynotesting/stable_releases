@@ -1,6 +1,7 @@
 # stable_releases
 
-**GitHub URL:** https://github.com/dynotesting/stable_releases
+**GitHub URL:** https://github.com/dynotesting/stable_releases  
+**README last updated:** 2026-03-17
 
 A collection of stable, tested scripts and utilities ready for general use.
 
@@ -28,6 +29,47 @@ compatible with most standard Windows batch terminals. Where PowerShell is
 used, PowerShell Core 7+ is assumed but Windows PowerShell 5.1 (built into
 Windows 10/11) will work for most scripts unless otherwise noted in the
 individual project README.
+
+---
+
+## Repository Structure
+
+### `script-packages/`
+
+- **`Create-AppShortcut/`** — Scans installed Microsoft Store apps and creates a Desktop shortcut for the selected app.
+  - `Create-AppShortcut.ps1`
+  - `readme.md`
+
+- **`RCLONE_FILEN/rclone-bisync-manager/`** — Bidirectional sync manager for rclone bisync between Dropbox and Filen, with tracer files, lock file handling, and loop/service mode.
+  - `RCLONE_bisync-dropbox-filen_v1.8.bat` *(legacy)*
+  - `RCLONE_bisync-dropbox-filen_v2.4.0.bat` *(legacy)*
+  - `rclone-bisync-manager_v2.5.5.bat` *(legacy)*
+  - `rclone-bisync-manager_v2.5.6.ps1` *(current stable)*
+  - `servy-configuration.json`
+  - `batch-powershell_efficiency-comparison.md`
+  - `readme.md`
+
+- **`Scryfall-MTG-Exporter/`** — Exports Magic: The Gathering card data from Scryfall API.
+  - `Scryfall-MTG-Exporter.ps1`
+  - `readme.md`
+
+---
+
+## Technology Stack
+
+<!-- LINE-COUNT-START -->
+**Languages and file types:**
+- PowerShell (.ps1) — 3 files, 1,871 lines
+- Batch scripts (.bat) — 3 files, 2,502 lines
+- JSON — 1 file
+
+**Total source lines:** 4,373
+<!-- LINE-COUNT-END -->
+
+**Development tools:**
+- Visual Studio Code
+- PowerShell 5.1+
+- rclone
 
 ---
 
