@@ -34,6 +34,7 @@ individual project README.
 
 ## Repository Structure
 
+<!-- FILE-TREE-START -->
 ### `script-packages/`
 
 - **`Create-AppShortcut/`** — Scans installed Microsoft Store apps and creates a Desktop shortcut for the selected app.
@@ -52,6 +53,7 @@ individual project README.
 - **`Scryfall-MTG-Exporter/`** — Exports Magic: The Gathering card data from Scryfall API.
   - `Scryfall-MTG-Exporter.ps1`
   - `readme.md`
+<!-- FILE-TREE-END -->
 
 ---
 
