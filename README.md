@@ -35,24 +35,22 @@ individual project README.
 ## Repository Structure
 
 <!-- FILE-TREE-START -->
-### `script-packages/`
-
-- **`Create-AppShortcut/`** — Scans installed Microsoft Store apps and creates a Desktop shortcut for the selected app.
-  - `Create-AppShortcut.ps1`
-  - `readme.md`
-
-- **`RCLONE_FILEN/rclone-bisync-manager/`** — Bidirectional sync manager for rclone bisync between Dropbox and Filen, with tracer files, lock file handling, and loop/service mode.
-  - `RCLONE_bisync-dropbox-filen_v1.8.bat` *(legacy)*
-  - `RCLONE_bisync-dropbox-filen_v2.4.0.bat` *(legacy)*
-  - `rclone-bisync-manager_v2.5.5.bat` *(legacy)*
-  - `rclone-bisync-manager_v2.5.6.ps1` *(current stable)*
-  - `servy-configuration.json`
-  - `batch-powershell_efficiency-comparison.md`
-  - `readme.md`
-
-- **`Scryfall-MTG-Exporter/`** — Exports Magic: The Gathering card data from Scryfall API.
-  - `Scryfall-MTG-Exporter.ps1`
-  - `readme.md`
+- **`script-packages/`**
+  - **`Create-AppShortcut/`**
+      - `Create-AppShortcut.ps1`
+      - `readme.md`
+  - **`RCLONE_FILEN/`**
+    - **`rclone-bisync-manager/`**
+        - `RCLONE_bisync-dropbox-filen_v1.8.bat`
+        - `RCLONE_bisync-dropbox-filen_v2.4.0.bat`
+        - `batch-powershell_efficiency-comparison.md`
+        - `rclone-bisync-manager_v2.5.5.bat`
+        - `rclone-bisync-manager_v2.5.6.ps1`
+        - `readme.md`
+        - `servy-configuration.json`
+  - **`Scryfall-MTG-Exporter/`**
+      - `Scryfall-MTG-Exporter.ps1`
+      - `readme.md`
 <!-- FILE-TREE-END -->
 
 ---
@@ -61,11 +59,10 @@ individual project README.
 
 <!-- LINE-COUNT-START -->
 **Languages and file types:**
-- PowerShell (.ps1) — 3 files, 1,871 lines
-- Batch scripts (.bat) — 3 files, 2,502 lines
-- JSON — 1 file
+- Batch scripts (.bat) — 3 files, 2,054 lines
+- PowerShell (.ps1) — 3 files, 1,583 lines
 
-**Total source lines:** 4,373
+**Total source lines:** 3,637
 <!-- LINE-COUNT-END -->
 
 **Development tools:**
