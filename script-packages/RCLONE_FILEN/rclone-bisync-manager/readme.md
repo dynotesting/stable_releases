@@ -37,6 +37,7 @@ The script prevents accidental data loss or duplication by validating both endpo
 - PowerShell 5.1 or later available in `PATH`
 - `rclone` installed and available in `PATH`
 - `Dropbox:` and `Filen:` remotes configured in rclone (see [rclone Remote Setup](#rclone-remote-setup) below)
+- **Servy** *(optional)* — recommended for running this script as a stable Windows background service. See [Servy Service Registration](#servy-service-registration) below.
 
 ---
 
@@ -128,17 +129,33 @@ nssm start rclone-bisync-manager
 
 ### Servy Service Registration
 
-See `servy-configuration.json` for a full example with recommended Windows Service settings.
+[Servy](https://servy-win.github.io/) is an optional Windows service manager that provides a more stable and feature-rich alternative to Task Scheduler and NSSM. It supports health monitoring, automatic restart on failure, log rotation, and a clean GUI for managing services — making it the recommended way to run `rclone-bisync-manager.ps1` as a persistent background task.
+
+A ready-to-import configuration file is included in the MyRepository development folder (`PowerShell/RCLONE_FILEN/rclone-bisync-manager/servy-configuration.json`). To register the service using it, open the Servy GUI, go to **Services → Import**, and select the file. Review the paths and update `UserAccount` and `Password` fields for your machine before importing.
+
+Alternatively, register via CLI:
 
 ```powershell
 servy-cli install `
     --name "rclone-bisync-manager" `
     --path "powershell.exe" `
-    --args "-ExecutionPolicy Bypass -File C:\Scripts\rclone-bisync-manager.ps1 -service" `
-    --stdout "C:\Logs\bisync.log" `
-    --stderr "C:\Logs\bisync-err.log"
+    --args "-ExecutionPolicy Bypass -File C:\Services\rclone-bisync-manager\rclone-bisync-manager.ps1 -service" `
+    --stdout "C:\Services\Logs\rclone-bisync-manager\STDOUT.log" `
+    --stderr "C:\Services\Logs\rclone-bisync-manager\STDERR.log"
 servy-cli start --name "rclone-bisync-manager"
 ```
+
+Key Servy features used in the included configuration:
+
+| Setting | Value | Description |
+|---|---|---|
+| `StartupType` | `2` | Automatic start — service launches on Windows startup |
+| `EnableHealthMonitoring` | `true` | Servy pings the service heartbeat every 30 seconds |
+| `MaxFailedChecks` | `3` | Restarts the service after 3 consecutive missed heartbeats |
+| `RecoveryAction` | `1` | Restart on failure |
+| `MaxRestartAttempts` | `3` | Maximum automatic restart attempts before giving up |
+| `EnableRotation` | `true` | Rotates stdout/stderr logs at 10 MB |
+| `EnableDateRotation` | `true` | Also rotates logs daily |
 
 ---
 
