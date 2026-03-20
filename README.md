@@ -85,6 +85,8 @@ before running anything.
 - Windows 10 or Windows 11
 - Any standard Windows CMD terminal or Windows Terminal
 - Project-specific dependencies listed in each subfolder README
+- **rclone** — Required for `rclone-bisync-manager`. [rclone.org](https://rclone.org/)
+- **Servy** *(optional, highly recommended)* — Windows service manager for running `rclone-bisync-manager` and SpotConnect as stable persistent background services. Provides health monitoring, automatic restart on failure, and log rotation — a significantly more reliable alternative to Task Scheduler and NSSM. [servy-win.github.io](https://servy-win.github.io/)
 
 ---
 
