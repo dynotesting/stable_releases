@@ -1,7 +1,6 @@
 # stable_releases
 
-**GitHub URL:** https://github.com/dynotesting/stable_releases  
-**README last updated:** 2026-03-17
+**GitHub URL:** https://github.com/dynotesting/stable_releases
 
 A collection of stable, tested scripts and utilities ready for general use.
 
@@ -32,46 +31,6 @@ individual project README.
 
 ---
 
-## Repository Structure
-
-<!-- FILE-TREE-START -->
-- **`script-packages/`**
-  - **`Create-AppShortcut/`**
-      - `Create-AppShortcut.ps1`
-      - `readme.md`
-  - **`RCLONE_FILEN/`**
-    - **`rclone-bisync-manager/`**
-        - `RCLONE_bisync-dropbox-filen_v1.8.bat`
-        - `RCLONE_bisync-dropbox-filen_v2.4.0.bat`
-        - `batch-powershell_efficiency-comparison.md`
-        - `rclone-bisync-manager_v2.5.5.bat`
-        - `rclone-bisync-manager_v2.5.6.ps1`
-        - `readme.md`
-        - `servy-configuration.json`
-  - **`Scryfall-MTG-Exporter/`**
-      - `Scryfall-MTG-Exporter.ps1`
-      - `readme.md`
-<!-- FILE-TREE-END -->
-
----
-
-## Technology Stack
-
-<!-- LINE-COUNT-START -->
-**Languages and file types:**
-- Batch scripts (.bat) — 3 files, 2,054 lines
-- PowerShell (.ps1) — 3 files, 1,583 lines
-
-**Total source lines:** 3,637
-<!-- LINE-COUNT-END -->
-
-**Development tools:**
-- Visual Studio Code
-- PowerShell 5.1+
-- rclone
-
----
-
 ## Contents
 
 Each project lives in its own subfolder with its own README covering
@@ -85,8 +44,6 @@ before running anything.
 - Windows 10 or Windows 11
 - Any standard Windows CMD terminal or Windows Terminal
 - Project-specific dependencies listed in each subfolder README
-- **rclone** — Required for `rclone-bisync-manager`. [rclone.org](https://rclone.org/)
-- **Servy** *(optional, highly recommended)* — Windows service manager for running `rclone-bisync-manager` and SpotConnect as stable persistent background services. Provides health monitoring, automatic restart on failure, and log rotation — a significantly more reliable alternative to Task Scheduler and NSSM. [servy-win.github.io](https://servy-win.github.io/)
 
 ---
 
